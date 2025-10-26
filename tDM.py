@@ -10,6 +10,7 @@ import socket
 import signal
 import sys
 import shutil
+import base64
 
 MAX_RETRIES = 5
 RETRY_DELAY = 5
@@ -104,9 +105,14 @@ class DownloadManager:
             else:
                 print("Please enter 'y' for yes or 'n' for no")
 
-    def download_chunk(self, url, start, end, temp_file, progress, lock, resume_size=0):
+    def download_chunk(self, url, start, end, temp_file, progress, lock, resume_size=0, user=None, password=None):
         """Download a chunk of file with shutdown awareness"""
         req = urllib.request.Request(url)
+        if user and password:
+            credentials = f"{user}:{password}"
+            encoded_credentials = base64.b64encode(credentials.encode()).decode()
+            req.add_header('Authorization', f'Basic {encoded_credentials}')
+
         range_header = f'bytes={start + resume_size}-' if end == '' else f'bytes={start + resume_size}-{end}'
         req.add_header('Range', range_header)
         
@@ -236,12 +242,16 @@ class DownloadManager:
         parser.add_argument('--path', default='.', help="The directory to save the file to.")
         parser.add_argument('--resume', choices=['ask', 'yes', 'no'], default='ask', 
                           help="Resume behavior: ask (default), yes, or no")
+        parser.add_argument('--user', help="Username for basic authentication.")
+        parser.add_argument('--password', help="Password for basic authentication.")
         args = parser.parse_args()
 
         url = args.link
         download_dir = args.path
         filename = url.split('/')[-1] if '/' in url else 'download'
         filepath = os.path.join(download_dir, filename)
+        user = args.user
+        password = args.password
 
         # Check if directory exists
         os.makedirs(download_dir, exist_ok=True)
@@ -249,6 +259,10 @@ class DownloadManager:
         try:
             # Get file size and check range support
             head_req = urllib.request.Request(url, method='HEAD')
+            if user and password:
+                credentials = f"{user}:{password}"
+                encoded_credentials = base64.b64encode(credentials.encode()).decode()
+                head_req.add_header('Authorization', f'Basic {encoded_credentials}')
             with urllib.request.urlopen(head_req) as response:
                 accepts_ranges = response.headers.get('Accept-Ranges') == 'bytes'
                 file_size = int(response.headers.get('Content-Length', 0))
@@ -310,7 +324,7 @@ class DownloadManager:
             threads = []
             for i, (start, end) in enumerate(chunks):
                 resume_size = resume_sizes[i]
-                t = threading.Thread(target=self.download_chunk, args=(url, start, end, temp_files[i], progress, self.lock, resume_size))
+                t = threading.Thread(target=self.download_chunk, args=(url, start, end, temp_files[i], progress, self.lock, resume_size, user, password))
                 threads.append(t)
                 t.daemon = True
                 t.start()

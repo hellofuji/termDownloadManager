@@ -49,7 +49,7 @@ A feature-rich, terminal-based download manager with a beautiful colored TUI, mu
 chmod +x tDM.py
 
 # Make it executable and run
-./tDM.py --link "YOUR_URL" --path "/download/directory"
+./tDM.py --user "YOUR_USERNAME" --password "YOUR_PASSWORD" --link "YOUR_URL" --path "/download/directory"
 ```
 
 ## Usage
@@ -60,6 +60,12 @@ chmod +x tDM.py
 ./tDM.py --link "https://example.com/large-file.iso" --path "~/downloads"
 ```
 
+### Authenticated Download
+
+```bash
+./tDM.py --user "myuser" --password "mypass" --link "https://example.com/protected-file.zip" --path "~/downloads"
+```
+
 ### Advanced Options
 
 ```bash
@@ -67,6 +73,9 @@ chmod +x tDM.py
 ./tDM.py --link "URL" --path "~/downloads" --resume ask
 ./tDM.py --link "URL" --path "~/downloads" --resume yes
 ./tDM.py --link "URL" --path "~/downloads" --resume no
+
+# With authentication
+./tDM.py --user "myuser" --password "mypass" --link "URL" --path "~/downloads"
 ```
 
 ### Command Line Arguments
@@ -76,6 +85,8 @@ chmod +x tDM.py
 | `--link`   | **Required** URL to download from (HTTP/HTTPS) | -                 |
 | `--path`   | Directory to save the downloaded file          | Current directory |
 | `--resume` | Resume behavior: `ask`, `yes`, or `no`         | `ask`             |
+| `--user`   | Username for basic authentication              | -                 |
+| `--password` | Password for basic authentication              | -                 |
 
 ## How It Works
 
